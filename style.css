@@ -1,0 +1,494 @@
+/* ── base: full-bleed canvas, no scrolling, and the shared pause chrome ── */
+/* each game themes the chrome through the --kit-* variables in its own style.css */
+
+:root {
+  --kit-ink: #1c1d2b;
+  --kit-paper: #fffdf7;
+  --kit-accent: #2f6fed;
+  --kit-accent-ink: #ffffff;
+  --kit-shade: rgba(16, 18, 30, 0.62);
+  --kit-radius: 18px;
+  --kit-font:
+    ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  font-family: var(--kit-font);
+  color: var(--kit-ink);
+  background: var(--kit-paper);
+}
+
+canvas#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.kit-ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kit-ui > * {
+  pointer-events: auto;
+}
+
+.kit-icon {
+  width: 1.3em;
+  height: 1.3em;
+  fill: currentColor;
+  flex: none;
+}
+
+.kit-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.kit-pause {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--kit-paper);
+  color: var(--kit-ink);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  z-index: 5;
+}
+
+.kit-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--kit-shade);
+  z-index: 50;
+}
+
+.kit-card {
+  display: grid;
+  gap: 12px;
+  justify-items: stretch;
+  min-width: min(280px, 82vw);
+  padding: 22px;
+  border-radius: calc(var(--kit-radius) + 6px);
+  background: var(--kit-paper);
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.16);
+  text-align: center;
+}
+
+.kit-card h2 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.kit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: var(--kit-radius);
+  background: var(--kit-accent);
+  color: var(--kit-accent-ink);
+  font-size: 20px;
+  font-weight: 800;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+}
+
+.kit-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+}
+
+.kit-button:focus-visible {
+  outline: 3px solid var(--kit-ink);
+  outline-offset: 3px;
+}
+
+.kit-quiet {
+  background: transparent;
+  color: var(--kit-ink);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--kit-ink) 22%, transparent);
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.kit-off .kit-waves {
+  display: none;
+}
+
+/* poki: a rewarded button is never green, never bigger than the plain way on, and shows a video icon */
+.kit-rewarded {
+  background: #7a4dd8;
+  color: #fff;
+  min-height: 46px;
+  font-size: 17px;
+}
+
+/* ── the next goal, always on screen; a game places and tints it in its own style.css ── */
+.kit-ui > .kit-goal,
+.kit-ui > .kit-new {
+  pointer-events: none;
+}
+
+.kit-goal {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(44vw, 250px);
+  display: grid;
+  gap: 4px;
+  padding: 6px 12px 8px;
+  border-radius: 14px;
+  background: var(--kit-paper);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  z-index: 4;
+}
+
+.kit-goal-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--kit-ink) 16%, transparent);
+  overflow: hidden;
+}
+
+.kit-goal-bar > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 5px;
+  background: var(--kit-goal, var(--kit-accent));
+  transition: width 0.25s ease-out;
+}
+
+.kit-new {
+  position: absolute;
+  top: calc(max(10px, env(safe-area-inset-top)) + 62px);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 8px 8px;
+  border-radius: 999px;
+  background: var(--kit-ink);
+  color: var(--kit-paper);
+  font-size: 17px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+  animation: kit-new 2.4s both;
+  z-index: 6;
+}
+
+.kit-new > b {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--kit-new, #ffcc33);
+  color: #1c1d2b;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@keyframes kit-new {
+  0% {
+    transform: translate(-50%, -18px) scale(0.6);
+    opacity: 0;
+  }
+  7% {
+    transform: translate(-50%, 0) scale(1.08);
+    opacity: 1;
+  }
+  12%,
+  86% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -10px) scale(0.96);
+    opacity: 0;
+  }
+}
+/* magpie magnet: golden-hour junkyard chrome. flat cream cards with an offset edge, no blur, no glass */
+
+:root {
+  --kit-ink: #33241a;
+  --kit-paper: #fff5da;
+  --kit-accent: #e0552d;
+  --kit-accent-ink: #fff;
+  --kit-goal: #12b5a0;
+  --kit-new: #ffc61a;
+  --kit-shade: rgba(43, 29, 20, 0.55);
+  --kit-radius: 16px;
+  --mm-edge: rgba(86, 48, 14, 0.4);
+  --mm-wood: #5e3b1f;
+  --mm-wood-light: #8a5a30;
+  --mm-gold: #ffc83d;
+  --mm-bar-h: 84px;
+  --mm-bar-w: 110px;
+}
+
+.kit-pause {
+  top: 5px;
+  right: max(10px, env(safe-area-inset-right));
+  border: 2px solid var(--kit-ink);
+  box-shadow: 0 3px 0 var(--mm-edge);
+}
+
+.mm-hud {
+  position: absolute;
+  top: 7px;
+  left: max(10px, env(safe-area-inset-left));
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.mm-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 12px 0 8px;
+  border-radius: 14px;
+  border: 2px solid var(--kit-ink);
+  background: var(--kit-paper);
+  box-shadow: 0 3px 0 var(--mm-edge);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mm-coin {
+  width: 24px;
+  height: 24px;
+}
+
+.mm-coins {
+  min-width: 78px;
+}
+
+/* the kit's goal bar, set between the coin chip and the pause button so it never covers either */
+.kit-ui > .kit-goal {
+  top: 7px;
+  left: 114px;
+  right: 66px;
+  width: auto;
+  max-width: 320px;
+  transform: none;
+  padding: 4px 12px 6px;
+  gap: 3px;
+  border: 2px solid var(--kit-ink);
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--mm-edge);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.kit-ui > .kit-goal .kit-goal-bar {
+  height: 10px;
+  border: 2px solid var(--kit-ink);
+  background: rgba(51, 36, 26, 0.14);
+}
+
+.kit-ui > .kit-goal .kit-goal-bar > i {
+  border-radius: 0;
+}
+
+/* the upgrade bar: a wooden plank; portrait along the bottom, landscape down the right */
+.mm-bar {
+  position: absolute;
+  left: var(--bar-x, 0);
+  top: var(--bar-y, 0);
+  width: var(--bar-w, 100%);
+  height: var(--bar-h, 84px);
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: var(--mm-wood);
+  box-shadow: inset 0 3px 0 var(--mm-wood-light);
+  z-index: 3;
+}
+
+.mm-portrait {
+  grid-template-columns: repeat(4, 1fr);
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+.mm-landscape {
+  grid-template-rows: repeat(4, 1fr);
+  padding-right: calc(8px + env(safe-area-inset-right));
+  box-shadow: inset 3px 0 0 var(--mm-wood-light);
+}
+
+.mm-up {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 3px;
+  border-radius: 14px;
+  background: var(--kit-paper);
+  box-shadow:
+    0 4px 0 #b88a4c,
+    0 0 0 3px var(--mm-gold);
+  color: var(--kit-ink);
+}
+
+.mm-up:disabled {
+  background: #e2c796;
+  box-shadow: 0 4px 0 #a07a45;
+  cursor: default;
+  color: rgba(51, 36, 26, 0.62);
+}
+
+.mm-up:disabled .mm-up-art {
+  opacity: 0.55;
+}
+
+.mm-up:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 #b88a4c,
+    0 0 0 3px var(--mm-gold);
+}
+
+/* the icon hops, never the button: a target that moves under a finger (or a click) is missed */
+.mm-hot .mm-up-art {
+  animation: mm-hop 0.9s ease-in-out infinite;
+}
+
+@keyframes mm-hop {
+  50% {
+    transform: translateY(-5px) scale(1.12);
+  }
+}
+
+.mm-portrait .mm-up {
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mm-up-icon {
+  width: clamp(24px, calc(var(--bar-h, 84px) * 0.3), 34px);
+  height: clamp(24px, calc(var(--bar-h, 84px) * 0.3), 34px);
+  display: block;
+}
+
+.mm-landscape .mm-up-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.mm-up-text {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  line-height: 1.05;
+  font-weight: 800;
+}
+
+.mm-landscape .mm-up-text {
+  justify-items: start;
+}
+
+.mm-up-level {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.mm-up-price {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-up-coin {
+  width: 14px;
+  height: 14px;
+}
+
+.mm-maxed .mm-up-price {
+  display: none;
+}
+
+.mm-clear .kit-card {
+  min-width: min(300px, 86vw);
+  gap: 14px;
+}
+
+.mm-earned {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-earned-coin {
+  width: 36px;
+  height: 36px;
+}
+
+.mm-next {
+  min-height: 62px;
+  font-size: 23px;
+}
+
+.mm-teaser {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--kit-accent);
+}
